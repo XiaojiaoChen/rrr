@@ -1,0 +1,6 @@
+int16 compositeCommand
+int16 elongationCommandBinary
+int16 orientationCommand
+int16 bendingCommandBinary
+int16 graspingCommandBinary
+

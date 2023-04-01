@@ -1,0 +1,452 @@
+<?xml version="1.0"?>
+<robot name="kn800RigidKE"
+  xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="PlateRadius" value="0.058" />
+  <xacro:property name="PlateHeight" value="0.006" />
+  <xacro:property name="L_min" value="${0.2}" /> 
+  <xacro:property name="L_max" value="${0.4}" /> 
+  <xacro:property name="Length_segN" value="${5}" />  
+  <xacro:property name="alpha_min" value="${-pi}" />
+  <xacro:property name="alpha_max" value="${pi}" /> 
+  <xacro:property name="Bending_segN" value="${6}" />  
+  <xacro:property name="gripper_min" value="${-pi*0.06}" />
+  <xacro:property name="gripper_max" value="${pi*0.4}" /> 
+
+  <xacro:property name="S1" value="0.062" />
+
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find wisson_kn800)/model/urdf/materials.xacro" />
+  
+  <xacro:macro name="linear_link" params="num">
+    <link name="linear_link_${num}">
+      <visual>
+        <geometry>
+          <mesh filename="package://wisson_kn800/model/meshes/kn800LinearShell.STL"/> 
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="aluminium"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.08" />
+        <inertia ixx="0.0000528" ixy="0.0" ixz="0.0" iyy=" 0.0000528" iyz="0.0" izz="0.0001055" />
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="rotary_link" params="num">
+    <link name="rotary_link_${num}">
+      <visual>
+        <geometry>
+          <mesh filename="package://wisson_kn800/model/meshes/kn800BendingShell.STL"/> 
+        </geometry>
+        <origin xyz="0 0 ${S1}" rpy="0 0 0"/>
+        <material name="aluminium"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 ${S1}" rpy="0 0 0"/>
+        <mass value="0.08" />
+        <inertia ixx="0.0000528" ixy="0.0" ixz="0.0" iyy=" 0.0000528" iyz="0.0" izz="0.0001055" />
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="phantom_link" params="num">
+    <link name="phantom_link_${num}">
+      <visual>
+        <geometry>
+          <cylinder radius="0.0001" length="0.0001"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="aluminium"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.08" />
+        <inertia ixx="0.0000528" ixy="0.0" ixz="0.0" iyy=" 0.0000528" iyz="0.0" izz="0.0001055" />
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="finger_link" params="num">
+    <link name="finger_${num}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry> 
+          <mesh filename="package://wisson_kn800/model/meshes/kn800GripperFinger.STL"/> 
+        </geometry>
+        <material name="aluminium"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.127" />
+        <inertia ixx="0.00032197" ixy="0.0" ixz="0.0" iyy="0.00032197" iyz="0.0" izz="0.00064284" />
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <link name="world"/>
+
+  <joint name="arm_base_fixed_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 2" rpy="0 ${pi} 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry> 
+        <mesh filename="package://wisson_kn800/model/meshes/kn800Base.STL"/> 
+      </geometry>
+      <material name="aluminium"/>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.127" />
+      <inertia ixx="0.00032197" ixy="0.0" ixz="0.0" iyy="0.00032197" iyz="0.0" izz="0.00064284" />
+    </inertial>
+  </link>
+  
+  <joint name="elongation" type="prismatic">
+    <parent link="base_link"/>
+    <child link="linear_link_${5}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${L_min}" rpy="0 0 0"/>
+    <limit effort="200" lower="0" upper="${L_max-L_min}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:linear_link num="5"/>
+
+  <joint name="prismatic_shadow_1" type="prismatic">
+    <parent link="base_link"/>
+    <child link="linear_link_${1}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${L_min/Length_segN}" rpy="0 0 0"/>
+    <mimic joint="elongation" multiplier="${1/Length_segN}" offset="0" />
+    <limit effort="200" lower="0" upper="${(L_max-L_min)/Length_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+ 
+  <xacro:linear_link num="1"/>
+
+  <joint name="prismatic_shadow_2" type="prismatic">
+    <parent link="linear_link_${1}"/>
+    <child link="linear_link_${2}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${L_min/Length_segN}" rpy="0 0 0"/>
+    <mimic joint="elongation" multiplier="${1/Length_segN}" offset="0" />
+    <limit effort="200" lower="0" upper="${(L_max-L_min)/Length_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:linear_link num="2"/>
+
+  <joint name="prismatic_shadow_3" type="prismatic">
+    <parent link="linear_link_${2}"/>
+    <child link="linear_link_${3}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${L_min/Length_segN}" rpy="0 0 0"/>
+    <mimic joint="elongation" multiplier="${1/Length_segN}" offset="0" />
+    <limit effort="200" lower="0" upper="${(L_max-L_min)/Length_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:linear_link num="3"/>
+
+  <joint name="prismatic_shadow_4" type="prismatic">
+    <parent link="linear_link_${3}"/>
+    <child link="linear_link_${4}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${L_min/Length_segN}" rpy="0 0 0"/>
+    <mimic joint="elongation" multiplier="${1/Length_segN}" offset="0" />
+    <limit effort="200" lower="0" upper="${(L_max-L_min)/Length_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:linear_link num="4"/>
+
+
+
+
+
+
+
+
+  
+  <joint name="orientation" type="revolute">
+    <parent link="linear_link_${5}"/>
+    <child link="phantom_link_${6}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${S1}" rpy="0 0 0"/>
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="6"/>
+
+  <joint name="bending" type="revolute">
+    <parent link="phantom_link_${6}"/>
+    <child link="phantom_link_${999}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <limit effort="200" lower="${alpha_min}" upper="${alpha_max}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="999"/>
+
+  <joint name="bending_shadow_1" type="revolute">
+    <parent link="phantom_link_${6}"/>
+    <child link="phantom_link_${7}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="bending" multiplier="${1/Bending_segN}" offset="0" />
+    <limit effort="200" lower="${alpha_min/Bending_segN}" upper="${alpha_max/Bending_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="7"/>
+
+  <joint name="orientation_shadow_1_2" type="revolute">
+    <parent link="phantom_link_${7}"/>
+    <child link="rotary_link_${6}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="-1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:rotary_link num="6"/>
+
+  <joint name="orientation_shadow_2_1" type="revolute">
+    <parent link="rotary_link_${6}"/>
+    <child link="phantom_link_${8}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${2*S1}" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="8"/>
+
+
+
+  <joint name="bending_shadow_2" type="revolute">
+    <parent link="phantom_link_${8}"/>
+    <child link="phantom_link_${9}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="bending" multiplier="${1/Bending_segN}" offset="0" />
+    <limit effort="200" lower="${alpha_min/Bending_segN}" upper="${alpha_max/Bending_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="9"/>
+
+  <joint name="orientation_shadow_2_2" type="revolute">
+    <parent link="phantom_link_${9}"/>
+    <child link="rotary_link_${7}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="-1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:rotary_link num="7"/>
+
+  <joint name="orientation_shadow_3_1" type="revolute">
+    <parent link="rotary_link_${7}"/>
+    <child link="phantom_link_${10}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${2*S1}" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="10"/>
+
+  <joint name="bending_shadow_3" type="revolute">
+    <parent link="phantom_link_${10}"/>
+    <child link="phantom_link_${11}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="bending" multiplier="${1/Bending_segN}" offset="0" />
+    <limit effort="200" lower="${alpha_min/Bending_segN}" upper="${alpha_max/Bending_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="11"/>
+
+  <joint name="orientation_shadow_3_2" type="revolute">
+    <parent link="phantom_link_${11}"/>
+    <child link="rotary_link_${8}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="-1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:rotary_link num="8"/>
+
+  <joint name="orientation_shadow_4_1" type="revolute">
+    <parent link="rotary_link_${8}"/>
+    <child link="phantom_link_${12}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${2*S1}" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="12"/>
+
+  <joint name="bending_shadow_4" type="revolute">
+    <parent link="phantom_link_${12}"/>
+    <child link="phantom_link_${13}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="bending" multiplier="${1/Bending_segN}" offset="0" />
+    <limit effort="200" lower="${alpha_min/Bending_segN}" upper="${alpha_max/Bending_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="13"/>
+
+ <joint name="orientation_shadow_4_2" type="revolute">
+    <parent link="phantom_link_${13}"/>
+    <child link="rotary_link_${9}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="-1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:rotary_link num="9"/>
+
+  <joint name="orientation_shadow_5_1" type="revolute">
+    <parent link="rotary_link_${9}"/>
+    <child link="phantom_link_${14}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${2*S1}" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="14"/>
+
+  <joint name="bending_shadow_5" type="revolute">
+    <parent link="phantom_link_${14}"/>
+    <child link="phantom_link_${15}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="bending" multiplier="${1/Bending_segN}" offset="0" />
+    <limit effort="200" lower="${alpha_min/Bending_segN}" upper="${alpha_max/Bending_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="15"/>
+
+ <joint name="orientation_shadow_5_2" type="revolute">
+    <parent link="phantom_link_${15}"/>
+    <child link="rotary_link_${10}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="-1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:rotary_link num="10"/>
+
+  <joint name="orientation_shadow_6_1" type="revolute">
+    <parent link="rotary_link_${10}"/>
+    <child link="phantom_link_${16}"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${2*S1}" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="16"/>
+
+  <joint name="bending_shadow_6" type="revolute">
+    <parent link="phantom_link_${16}"/>
+    <child link="phantom_link_${17}"/>
+    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mimic joint="bending" multiplier="${1/Bending_segN}" offset="0" />
+    <limit effort="200" lower="${alpha_min/Bending_segN}" upper="${alpha_max/Bending_segN}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:phantom_link num="17"/>
+
+  <joint name="orientation_shadow_6_2" type="revolute">
+    <parent link="phantom_link_${17}"/>
+    <child link="link_BendingEnd"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0 0 ${S1}" rpy="0 0 0"/>
+    <mimic joint="orientation" multiplier="-1" offset="0" />
+    <limit effort="200" lower="${-2*pi}" upper="${2*pi}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+
+  <link name="link_BendingEnd">
+    <visual>
+      <origin  xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wisson_kn800/model/meshes/kn800BendingShellEnd.STL"/>
+      </geometry>
+      <material name="aluminium"/>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.127" />
+      <inertia ixx="0.00032197" ixy="0.0" ixz="0.0" iyy="0.00032197" iyz="0.0" izz="0.00064284" />
+    </inertial>
+  </link>
+
+
+  <joint name="gripperBaseFixed" type="fixed">
+    <parent link="link_BendingEnd"/>
+    <child link="link_gripper_base"/> 
+    <origin xyz="0 0 0" rpy="0 0 0"/> 
+  </joint>
+
+  <link name="link_gripper_base">
+    <visual>
+      <origin  xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://wisson_kn800/model/meshes/kn800GripperBase.STL"/>
+      </geometry>
+      <material name="aluminium"/>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.127" />
+      <inertia ixx="0.00032197" ixy="0.0" ixz="0.0" iyy="0.00032197" iyz="0.0" izz="0.00064284" />
+    </inertial>
+  </link>
+  
+  <joint name="grasp" type="revolute">
+    <parent link="link_gripper_base"/>
+    <child link="finger_${1}"/>
+    <origin xyz="${0.037*cos(0)} ${0.037*sin(0)} 0.118" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="200" lower="${gripper_min}" upper="${gripper_max}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:finger_link num="1"/>
+
+  <joint name="grasp2" type="revolute">
+    <parent link="link_gripper_base"/>
+    <child link="finger_${2}"/> 
+    <origin xyz="${0.037*cos(2*pi/3)} ${0.037*sin(2*pi/3)} 0.12" rpy="0 0 ${2*pi/3}"/>
+    <axis xyz="0 -1 0"/>
+    <mimic joint="grasp" multiplier="1" offset="0" />
+    <limit effort="200" lower="${gripper_min}" upper="${gripper_max}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:finger_link num="2"/>
+ 
+  <joint name="grasp3" type="revolute">
+    <parent link="link_gripper_base"/>
+    <child link="finger_${3}"/> 
+    <origin xyz="${0.037*cos(4*pi/3)} ${0.037*sin(4*pi/3)} 0.12" rpy="0 0 ${4*pi/3}"/>
+    <axis xyz="0 -1 0"/>
+    <mimic joint="grasp" multiplier="1" offset="0" />
+    <limit effort="200" lower="${gripper_min}" upper="${gripper_max}" velocity="20"/>
+    <dynamics damping="0.7" friction="0.3"/>
+  </joint>
+  <xacro:finger_link num="3"/>
+
+</robot>

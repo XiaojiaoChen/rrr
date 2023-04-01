@@ -1,0 +1,100 @@
+<?xml version="1.0" ?>
+<robot name="wisson_nimbo_kn800">
+    
+<!--base_link-->>
+    <link name="base_link">   
+        <visual> 
+            <origin xyz="0.0 0.0 -0.08" rpy="0.0 0.0 0.0"/> 
+            <geometry>  
+                <cylinder radius="0.20" length="0.16"/>             
+            </geometry>
+            <material name="yellow"> 
+                <color rgba="1 0.4 0 1"/>  
+            </material>
+        </visual>
+    </link>
+
+<!--link1-->>
+
+
+    <link name="link1">
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0.0 0.0"/>
+            <geometry>
+                <cylinder radius="0.1" length="0.2"/>
+            </geometry>
+            <material name="white">
+                <color rgba="1 1 1 0.9"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="joint1" type="prismatic">   
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/> 
+        <parent link="base_link"/>  
+        <child link="link1"/> 
+        <axis xyz="0.0 0 1"/>  
+        <limit lower="0.0" upper="0.1" effort="0" velocity="0" />
+    </joint>
+<!--link2-->>
+
+    <link name="link2">
+        <visual>
+            <origin xyz="0.0 0.0 0.05" rpy="0 0.0 0.0"/>
+            <geometry>
+                <box size="0.01 0.01 0.01" />
+            </geometry>
+            <material name="white">
+                <color rgba="1 1 1 0.9"/>
+            </material>
+        </visual>
+    </link>
+    <joint name="joint2" type="revolute">   
+        <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/> 
+        <parent link="link1"/>  
+        <child link="link2"/> 
+        <axis xyz="0.0 0 1"/>  
+        <limit lower="-3.14" upper="3.14" effort="0" velocity="0" />
+    </joint>
+
+
+    <joint name="joint3" type="revolute">   
+        <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/> 
+        <parent link="link2"/>  
+        <child link="link3"/> 
+        <axis xyz="1 0 0"/>  
+        <limit lower="0" upper="1.57" effort="0" velocity="0" />
+    </joint>
+
+        <link name="link3">
+        <visual>
+            <origin xyz="0.0 0.0 0.05" rpy="0 0.0 0.0"/>
+            <geometry>
+                <cylinder radius="0.05" length="0.2"/>
+            </geometry>
+            <material name="white">
+                <color rgba="1 1 1 0.9"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="joint4" type="fixed">   
+        <origin xyz="0.0 0.0 0.1" rpy="0.0 0.0 0.0"/> 
+        <parent link="link3"/>  
+        <child link="link4"/> 
+        <axis xyz="1 0 0"/>  
+        <!-- <limit lower="0" upper="1.57" effort="0" velocity="0" /> -->
+    </joint>
+
+        <link name="link4">
+        <visual>
+            <origin xyz="0.0 0.0 0.05" rpy="0 0.0 0.0"/>
+            <geometry>
+                <cylinder radius="0.02" length="0.02"/>
+            </geometry>
+            <material name="white">
+                <color rgba="1 1 1 0.9"/>
+            </material>
+        </visual>
+    </link>
+</robot>

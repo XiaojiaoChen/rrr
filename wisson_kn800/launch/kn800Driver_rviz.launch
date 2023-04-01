@@ -1,0 +1,14 @@
+<launch>
+
+<arg name="kn800_model" default="$(find wisson_kn800)/model/urdf/kn800RigidKE.urdf"/>
+<arg name="rvizconfig" default="$(find wisson_kn800)/model/rvizconfig.rviz" />
+<param name="robot_description" command="$(find xacro)/xacro $(arg kn800_model)" />
+
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+<node name="rqt_gui" pkg="rqt_gui" type="rqt_gui" output="screen" />
+  
+
+<node name="kn800Driver" pkg="wisson_kn800" type="kn800Driver" args="/dev/ttyUSB0" output="screen"> </node>
+
+
+</launch>

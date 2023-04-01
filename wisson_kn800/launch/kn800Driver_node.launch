@@ -1,0 +1,3 @@
+<launch>
+<node name="kn800Driver" pkg="wisson_kn800" type="kn800Driver" args="/dev/ttyUSB0" output="screen"> </node>
+</launch>
